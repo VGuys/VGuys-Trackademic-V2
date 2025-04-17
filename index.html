@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>V Guys Health Risk Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h2 {
+      color: #4CAF50;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h2>V Guys Health Risk Calculator</h2>
+  <p>Fill in health details to assess health risk. All values must be in metric units:</p>
+  <ul>
+    <li><strong>Height</strong> in centimeters (minimum 60cm)</li>
+    <li><strong>Weight</strong> in kilograms</li>
+    <li><strong>Blood Pressure</strong> in mm Hg</li>
+  </ul>
+
+  <form id="riskForm">
+    Age: <input type="number" name="age" required min="1"><br><br>
+    Height (cm): <input type="number" name="height" required min="60"><br><br>
+    Weight (kg): <input type="number" name="weight" required min="1"><br><br>
+
+    Systolic BP (mm Hg): <input type="number" name="systolic" min="1"><br><br>
+    Diastolic BP (mm Hg): <input type="number" name="diastolic" min="1"><br><br>
+
+    Family Disease History:<br>
+    <label><input type="checkbox" name="familyHistory" value="diabetes"> Diabetes</label><br>
+    <label><input type="checkbox" name="familyHistory" value="cancer"> Cancer</label><br>
+    <label><input type="checkbox" name="familyHistory" value="heart disease"> Heart Disease</label><br><br>
+
+    <button type="submit">Calculate Risk</button>
+  </form>
+
+  <p class="error" id="errorMsg"></p>
+  <div class="result" id="result"></div>
+
+  <script>
+    const apiUrl = "https://vguys-hrc-cwc0cpe8fgf9bvdd.uaenorth-01.azurewebsites.net/api/calculate-risk";
+
+    document.getElementById("riskForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      document.getElementById("errorMsg").innerText = "";
+      document.getElementById("result").innerHTML = "";
+
+      const form = e.target;
+      const familyHistory = Array.from(document.querySelectorAll('input[name="familyHistory"]:checked')).map(cb => cb.value);
+
+      const data = {
+        age: parseInt(form.age.value),
+        height: parseFloat(form.height.value),
+        weight: parseFloat(form.weight.value),
+        systolic: form.systolic.value ? parseInt(form.systolic.value) : null,
+        diastolic: form.diastolic.value ? parseInt(form.diastolic.value) : null,
+        familyHistory
+      };
+
+      // Input validation (client-side for immediate UX)
+      if (data.height < 60) {
+        document.getElementById("errorMsg").innerText = "Height must be at least 60 centimeters.";
+        return;
+      }
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+          document.getElementById("errorMsg").innerText = result.error;
+          return;
+        }
+
+        // Display result summary
+        document.getElementById("result").innerHTML = `
+          <strong>Health Risk Summary:</strong><br>
+          Age: ${data.age}<br>
+          Height: ${data.height} cm<br>
+          Weight: ${data.weight} kg<br>
+          BMI: ${result.bmi}<br>
+          Blood Pressure: ${data.systolic || '-'} / ${data.diastolic || '-'}<br>
+          Family History: ${data.familyHistory.length > 0 ? data.familyHistory.join(', ') : 'None'}<br><br>
+          <strong>Risk Score:</strong> ${result.riskScore}<br>
+          <strong>Risk Category:</strong> ${result.riskCategory}
+        `;
+      } catch (error) {
+        document.getElementById("errorMsg").innerText = "Failed to calculate risk: " + error.message;
+      }
+    });
+  </script>
+</body>
+</html>
