@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Trackademic Risk Analyzer</title>
+  <title>Course GPA Tracker</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,93 +13,92 @@
     h2 {
       color: #4CAF50;
     }
-    .error {
-      color: red;
-      font-weight: bold;
+    .form-section {
+      margin-bottom: 15px;
     }
     .result {
       margin-top: 20px;
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 6px;
+      background-color: #f9f9f9;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h2>Trackademic Risk Analyzer</h2>
-  <p>Enter your health data to get a personalized risk score:</p>
-  <form id="riskForm">
-    Age: <input type="number" name="age" required min="1"><br><br>
-    Height (cm): <input type="number" name="height" required min="60"><br><br>
-    Weight (kg): <input type="number" name="weight" required min="1"><br><br>
-
-    Systolic BP (mm Hg): <input type="number" name="systolic" min="1"><br><br>
-    Diastolic BP (mm Hg): <input type="number" name="diastolic" min="1"><br><br>
-
-    Family Disease History:<br>
-    <label><input type="checkbox" name="familyHistory" value="diabetes"> Diabetes</label><br>
-    <label><input type="checkbox" name="familyHistory" value="cancer"> Cancer</label><br>
-    <label><input type="checkbox" name="familyHistory" value="heart disease"> Heart Disease</label><br><br>
-
-    <button type="submit">Calculate Risk</button>
+  <h2>Trackademic Course GPA Tracker</h2>
+  <form id="courseForm">
+    <div class="form-section">
+      <label>Course Code: <input type="text" name="code" required></label>
+    </div>
+    <div class="form-section">
+      <label>Course Name: <input type="text" name="name" required></label>
+    </div>
+    <div class="form-section">
+      <label>Semester: 
+        <select name="semester" required>
+          <option value="" disabled selected>Select Semester</option>
+          <option value="Fall 2024">Fall 2024</option>
+          <option value="Spring 2025">Spring 2025</option>
+          <option value="Summer 2025">Summer 2025</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-section">
+      <label>Status:
+        <select name="status" id="statusSelect" required>
+          <option value="" disabled selected>Select Status</option>
+          <option value="completed">Completed</option>
+          <option value="pending">Pending</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-section hidden" id="gpaSection">
+      <label>GPA: <input type="number" step="0.01" name="gpa" min="0" max="4.00"></label>
+    </div>
+    <button type="submit">Add Course</button>
   </form>
 
-  <p class="error" id="errorMsg"></p>
-  <div class="result" id="result"></div>
+  <div id="result" class="result"></div>
 
   <script>
-    const apiUrl = "https://node-js-on-azure-ab-1-bdaybfc0c6fhaphy.uaenorth-01.azurewebsites.net/api/calculate-risk";
+    const statusSelect = document.getElementById("statusSelect");
+    const gpaSection = document.getElementById("gpaSection");
+    const resultDiv = document.getElementById("result");
 
-    document.getElementById("riskForm").addEventListener("submit", async function (e) {
+    // Show/hide GPA input based on status
+    statusSelect.addEventListener("change", () => {
+      if (statusSelect.value === "completed") {
+        gpaSection.classList.remove("hidden");
+      } else {
+        gpaSection.classList.add("hidden");
+      }
+    });
+
+    document.getElementById("courseForm").addEventListener("submit", function(e) {
       e.preventDefault();
-      document.getElementById("errorMsg").innerText = "";
-      document.getElementById("result").innerHTML = "";
 
       const form = e.target;
-      const familyHistory = Array.from(document.querySelectorAll('input[name="familyHistory"]:checked')).map(cb => cb.value);
+      const code = form.code.value.trim();
+      const name = form.name.value.trim();
+      const semester = form.semester.value;
+      const status = form.status.value;
+      const gpa = status === "completed" ? parseFloat(form.gpa.value).toFixed(2) : "N/A";
 
-      const data = {
-        age: parseInt(form.age.value),
-        height: parseFloat(form.height.value),
-        weight: parseFloat(form.weight.value),
-        systolic: form.systolic.value ? parseInt(form.systolic.value) : null,
-        diastolic: form.diastolic.value ? parseInt(form.diastolic.value) : null,
-        familyHistory
-      };
+      resultDiv.innerHTML = `
+        <h3>Course Added</h3>
+        <strong>Code:</strong> ${code}<br>
+        <strong>Name:</strong> ${name}<br>
+        <strong>Semester:</strong> ${semester}<br>
+        <strong>Status:</strong> ${status.charAt(0).toUpperCase() + status.slice(1)}<br>
+        <strong>GPA:</strong> ${gpa}
+      `;
 
-      if (data.height < 60) {
-        document.getElementById("errorMsg").innerText = "Height must be at least 60 centimeters.";
-        return;
-      }
-
-      try {
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-
-        if (result.error) {
-          document.getElementById("errorMsg").innerText = result.error;
-          return;
-        }
-
-        document.getElementById("result").innerHTML = `
-          <strong>Risk Analysis:</strong><br>
-          Age: ${data.age}<br>
-          Height: ${data.height} cm<br>
-          Weight: ${data.weight} kg<br>
-          BMI: ${result.bmi}<br>
-          Blood Pressure: ${data.systolic || '-'} / ${data.diastolic || '-'}<br>
-          Family History: ${data.familyHistory.length > 0 ? data.familyHistory.join(', ') : 'None'}<br><br>
-          <strong>Risk Score:</strong> ${result.riskScore}<br>
-          <strong>Category:</strong> ${result.riskCategory}
-        `;
-      } catch (error) {
-        document.getElementById("errorMsg").innerText = "Error contacting server: " + error.message;
-      }
+      form.reset();
+      gpaSection.classList.add("hidden"); // Hide GPA again
     });
   </script>
 </body>
