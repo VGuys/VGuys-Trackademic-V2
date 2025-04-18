@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>V Guys Health Risk Calculator</title>
+  <title>Trackademic Risk Analyzer</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -26,14 +26,8 @@
   </style>
 </head>
 <body>
-  <h2>V Guys Health Risk Calculator</h2>
-  <p>Fill in health details to assess health risk. All values must be in metric units:</p>
-  <ul>
-    <li><strong>Height</strong> in centimeters (minimum 60cm)</li>
-    <li><strong>Weight</strong> in kilograms</li>
-    <li><strong>Blood Pressure</strong> in mm Hg</li>
-  </ul>
-
+  <h2>Trackademic Risk Analyzer</h2>
+  <p>Enter your health data to get a personalized risk score:</p>
   <form id="riskForm">
     Age: <input type="number" name="age" required min="1"><br><br>
     Height (cm): <input type="number" name="height" required min="60"><br><br>
@@ -54,7 +48,7 @@
   <div class="result" id="result"></div>
 
   <script>
-    const apiUrl = "https://vguys-hrc-cwc0cpe8fgf9bvdd.uaenorth-01.azurewebsites.net/api/calculate-risk";
+    const apiUrl = "https://node-js-on-azure-ab-1-bdaybfc0c6fhaphy.uaenorth-01.azurewebsites.net/api/calculate-risk";
 
     document.getElementById("riskForm").addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -73,7 +67,6 @@
         familyHistory
       };
 
-      // Input validation (client-side for immediate UX)
       if (data.height < 60) {
         document.getElementById("errorMsg").innerText = "Height must be at least 60 centimeters.";
         return;
@@ -93,9 +86,8 @@
           return;
         }
 
-        // Display result summary
         document.getElementById("result").innerHTML = `
-          <strong>Health Risk Summary:</strong><br>
+          <strong>Risk Analysis:</strong><br>
           Age: ${data.age}<br>
           Height: ${data.height} cm<br>
           Weight: ${data.weight} kg<br>
@@ -103,10 +95,10 @@
           Blood Pressure: ${data.systolic || '-'} / ${data.diastolic || '-'}<br>
           Family History: ${data.familyHistory.length > 0 ? data.familyHistory.join(', ') : 'None'}<br><br>
           <strong>Risk Score:</strong> ${result.riskScore}<br>
-          <strong>Risk Category:</strong> ${result.riskCategory}
+          <strong>Category:</strong> ${result.riskCategory}
         `;
       } catch (error) {
-        document.getElementById("errorMsg").innerText = "Failed to calculate risk: " + error.message;
+        document.getElementById("errorMsg").innerText = "Error contacting server: " + error.message;
       }
     });
   </script>
