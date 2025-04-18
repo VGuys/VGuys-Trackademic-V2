@@ -1,23 +1,60 @@
-const express = require('express');
+const http = require('http');
+const url = require('url');
+const fs = require('fs');
 const path = require('path');
-const app = express();
-const port = process.env.PORT || 3000;
+const healthRiskCalculator = require('./health_risk');
 
-// Middleware to parse JSON and form data
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const server = http.createServer((req, res) => {
+    const parsedUrl = url.parse(req.url, true);
+    const pathname = parsedUrl.pathname;
 
-// Serve index.html from the root folder
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+    console.log(`Received ${req.method} request for ${pathname}`);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+        res.writeHead(204);
+        res.end();
+        return;
+    }
+
+    if (pathname === '/' || pathname === '/index.html') {
+        fs.readFile(path.join(__dirname, 'index.html'), (err, data) => {
+            if (err) {
+                res.writeHead(500, { 'Content-Type': 'text/plain' });
+                res.end('Internal Server Error');
+                return;
+            }
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(data);
+        });
+        return;
+    }
+
+    if (pathname === '/api/calculate-risk' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            try {
+                const inputData = JSON.parse(body);
+                const result = healthRiskCalculator(inputData);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(result));
+            } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
+        return;
+    }
+
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not Found');
 });
 
-// Optional: handle POST if needed later
-// app.post('/submit', (req, res) => {
-//   console.log(req.body); // data from frontend
-//   res.json({ message: 'Data received successfully' });
-// });
-
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+const PORT = process.env.PORT || 1337;
+server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });
