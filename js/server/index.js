@@ -22,6 +22,20 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // Handle CSS file requests
+    if (pathname.endsWith('.css')) {
+        const cssFile = pathname.split('/').pop();
+        serveFile(res, path.join('css', cssFile), 'text/css');
+        return;
+    }
+
+    // Handle client-side JS file requests
+    if (pathname.endsWith('.js') && !pathname.includes('/api/')) {
+        const jsFile = pathname.split('/').pop();
+        serveFile(res, path.join('js/client', jsFile), 'application/javascript');
+        return;
+    }
+
     // Serve static HTML files
     if (pathname === '/' || pathname === '/login') {
         serveFile(res, 'html/login.html');
@@ -153,22 +167,24 @@ const server = http.createServer((req, res) => {
 });
 
 // Helper function to serve files
-function serveFile(res, filename) {
-    fs.readFile(path.join(__dirname, filename), (err, data) => {
+function serveFile(res, filepath, contentType = null) {
+    fs.readFile(path.join(__dirname, filepath), (err, data) => {
         if (err) {
-            console.error(`Error reading file ${filename}:`, err);
+            console.error(`Error reading file ${filepath}:`, err);
             res.writeHead(500, { 'Content-Type': 'text/plain' });
             res.end('Internal Server Error');
             return;
         }
         
-        // Set the content type based on file extension
-        const ext = path.extname(filename);
-        let contentType = 'text/html';
-        
-        if (ext === '.css') contentType = 'text/css';
-        else if (ext === '.js') contentType = 'application/javascript';
-        else if (ext === '.json') contentType = 'application/json';
+        // Set the content type based on file extension if not specified
+        if (!contentType) {
+            const ext = path.extname(filepath);
+            contentType = 'text/html';
+            
+            if (ext === '.css') contentType = 'text/css';
+            else if (ext === '.js') contentType = 'application/javascript';
+            else if (ext === '.json') contentType = 'application/json';
+        }
         
         res.writeHead(200, { 'Content-Type': contentType });
         res.end(data);
