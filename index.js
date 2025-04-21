@@ -1,14 +1,14 @@
 const http = require('http');
-const url = require('url');
 const fs = require('fs');
 const path = require('path');
-const querystring = require('querystring');
-const db = require('./db');
+const url = require('url');
+const db = require('./db'); // PostgreSQL connection
 
 const server = http.createServer((req, res) => {
   const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
+  const { pathname } = parsedUrl;
 
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -19,66 +19,83 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  const serveFile = (filename, contentType) => {
-    fs.readFile(path.join(__dirname, filename), (err, data) => {
+  // Serve HTML files
+  if (req.method === 'GET') {
+    let filePath = '';
+
+    if (pathname === '/' || pathname === '/login') {
+      filePath = 'login.html';
+    } else if (pathname === '/signup') {
+      filePath = 'signup.html';
+    } else if (pathname === '/home') {
+      filePath = 'index.html';
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('404 Not Found');
+      return;
+    }
+
+    fs.readFile(path.join(__dirname, filePath), (err, data) => {
       if (err) {
-        res.writeHead(500);
-        res.end('Server Error');
-      } else {
-        res.writeHead(200, { 'Content-Type': contentType });
-        res.end(data);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Error loading file');
+        return;
       }
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(data);
     });
-  };
+    return;
+  }
 
-  if (pathname === '/' || pathname === '/index.html') return serveFile('index.html', 'text/html');
-  if (pathname === '/login.html') return serveFile('login.html', 'text/html');
-  if (pathname === '/signup.html') return serveFile('signup.html', 'text/html');
-
-  if (pathname === '/login' && req.method === 'POST') {
+  // Login
+  if (pathname === '/api/login' && req.method === 'POST') {
     let body = '';
-    req.on('data', chunk => { body += chunk; });
+    req.on('data', chunk => body += chunk);
     req.on('end', async () => {
-      const { user_id, password } = querystring.parse(body);
+      const { user_id, password } = JSON.parse(body);
       try {
-        const result = await db.query('SELECT * FROM users WHERE user_id = $1 AND password = $2', [user_id, password]);
+        const query = 'SELECT * FROM users WHERE user_id = $1 AND password = $2';
+        const result = await db.query(query, [user_id, password]);
         if (result.rows.length > 0) {
-          res.writeHead(302, { 'Location': '/index.html' });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true }));
         } else {
-          res.writeHead(401, { 'Content-Type': 'text/plain' });
-          res.write('Invalid login');
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Invalid credentials' }));
         }
-        res.end();
       } catch (err) {
-        res.writeHead(500);
-        res.end('DB error');
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, message: 'Server error' }));
       }
     });
     return;
   }
 
-  if (pathname === '/signup' && req.method === 'POST') {
+  // Signup
+  if (pathname === '/api/signup' && req.method === 'POST') {
     let body = '';
-    req.on('data', chunk => { body += chunk; });
+    req.on('data', chunk => body += chunk);
     req.on('end', async () => {
-      const { user_id, password } = querystring.parse(body);
+      const { user_id, password } = JSON.parse(body);
       try {
-        const result = await db.query('INSERT INTO users (user_id, password) VALUES ($1, $2)', [user_id, password]);
-        res.writeHead(302, { 'Location': '/login.html' });
-        res.end();
+        const insertQuery = 'INSERT INTO users (user_id, password) VALUES ($1, $2)';
+        await db.query(insertQuery, [user_id, password]);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
       } catch (err) {
-        res.writeHead(500);
-        res.end('DB error or duplicate user_id');
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, message: 'Signup failed' }));
       }
     });
     return;
   }
 
+  // Default 404
   res.writeHead(404, { 'Content-Type': 'text/plain' });
   res.end('Not Found');
 });
 
-const PORT = process.env.PORT || 1337;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
