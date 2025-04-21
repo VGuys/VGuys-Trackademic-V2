@@ -2,15 +2,106 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Login</title>
+  <title>Login to Trackademic</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h2 {
+      color: #4CAF50;
+    }
+    .form-section {
+      margin-bottom: 15px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .message {
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+    .error {
+      background-color: #ffdddd;
+      border: 1px solid #f44336;
+    }
+    .success {
+      background-color: #ddffdd;
+      border: 1px solid #4CAF50;
+    }
+  </style>
 </head>
 <body>
-  <h2>Login</h2>
-  <form action="/login" method="POST">
-    <label>User ID: <input type="text" name="user_id" required></label><br>
-    <label>Password: <input type="password" name="password" required></label><br>
-    <button type="submit">Login</button>
-  </form>
-  <p>Don't have an account? <a href="/signup.html">Sign up here</a></p>
+  <h2>Login to Trackademic GPA Tracker</h2>
+  <div id="messageBox" class="message" style="display: none;"></div>
+  
+  <div class="form-section">
+    <label for="user_id">User ID:</label>
+    <input type="text" id="user_id" required>
+  </div>
+  
+  <div class="form-section">
+    <label for="password">Password:</label>
+    <input type="password" id="password" required>
+  </div>
+  
+  <button id="loginButton">Login</button>
+  
+  <p>Don't have an account? <a href="/signup">Sign up here</a></p>
+
+  <script>
+    document.getElementById('loginButton').addEventListener('click', async function() {
+      const user_id = document.getElementById('user_id').value.trim();
+      const password = document.getElementById('password').value;
+      
+      if (!user_id || !password) {
+        showMessage('Please fill in all fields', 'error');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ user_id, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showMessage('Login successful!', 'success');
+          // Redirect to home page after successful login
+          setTimeout(() => {
+            window.location.href = '/home';
+          }, 1000);
+        } else {
+          showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
+        }
+      } catch (error) {
+        showMessage('An error occurred. Please try again later.', 'error');
+        console.error('Login error:', error);
+      }
+    });
+    
+    function showMessage(message, type) {
+      const messageBox = document.getElementById('messageBox');
+      messageBox.textContent = message;
+      messageBox.style.display = 'block';
+      messageBox.className = 'message ' + type;
+    }
+  </script>
 </body>
 </html>
