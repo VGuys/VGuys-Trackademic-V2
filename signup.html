@@ -2,15 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sign Up</title>
+  <title>Sign Up for Trackademic</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h2 {
+      color: #4CAF50;
+    }
+    .form-section {
+      margin-bottom: 15px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .message {
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+    .error {
+      background-color: #ffdddd;
+      border: 1px solid #f44336;
+    }
+    .success {
+      background-color: #ddffdd;
+      border: 1px solid #4CAF50;
+    }
+  </style>
 </head>
 <body>
-  <h2>Sign Up</h2>
-  <form action="/signup" method="POST">
-    <label>User ID: <input type="text" name="user_id" required></label><br>
-    <label>Password: <input type="password" name="password" required></label><br>
-    <button type="submit">Sign Up</button>
-  </form>
-  <p>Already have an account? <a href="/login.html">Login here</a></p>
+  <h2>Sign Up for Trackademic GPA Tracker</h2>
+  <div id="messageBox" class="message" style="display: none;"></div>
+  
+  <div class="form-section">
+    <label for="user_id">User ID:</label>
+    <input type="text" id="user_id" required>
+  </div>
+  
+  <div class="form-section">
+    <label for="password">Password:</label>
+    <input type="password" id="password" required>
+  </div>
+  
+  <div class="form-section">
+    <label for="confirm_password">Confirm Password:</label>
+    <input type="password" id="confirm_password" required>
+  </div>
+  
+  <button id="signupButton">Sign Up</button>
+  
+  <p>Already have an account? <a href="/login">Login here</a></p>
+
+  <script>
+    document.getElementById('signupButton').addEventListener('click', async function() {
+      const user_id = document.getElementById('user_id').value.trim();
+      const password = document.getElementById('password').value;
+      const confirm_password = document.getElementById('confirm_password').value;
+      
+      if (!user_id || !password || !confirm_password) {
+        showMessage('Please fill in all fields', 'error');
+        return;
+      }
+      
+      if (password !== confirm_password) {
+        showMessage('Passwords do not match', 'error');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ user_id, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showMessage('Account created successfully!', 'success');
+          // Redirect to login page after successful signup
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 1500);
+        } else {
+          showMessage(data.message || 'Signup failed. Please try again.', 'error');
+        }
+      } catch (error) {
+        showMessage('An error occurred. Please try again later.', 'error');
+        console.error('Signup error:', error);
+      }
+    });
+    
+    function showMessage(message, type) {
+      const messageBox = document.getElementById('messageBox');
+      messageBox.textContent = message;
+      messageBox.style.display = 'block';
+      messageBox.className = 'message ' + type;
+    }
+  </script>
 </body>
 </html>
