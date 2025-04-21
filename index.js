@@ -3,7 +3,6 @@ const url = require('url');
 const fs = require('fs');
 const path = require('path');
 const healthRiskCalculator = require('./health_risk');
-const db = require('./db'); // PostgreSQL connection
 
 const server = http.createServer((req, res) => {
     const parsedUrl = url.parse(req.url, true);
@@ -21,8 +20,8 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    if (pathname === '/' || pathname === '/index.html') {
-        fs.readFile(path.join(__dirname, 'signup.html'), (err, data) => {
+    if (pathname === '/' || pathname === '/login.html') {
+        fs.readFile(path.join(__dirname, 'login.html'), (err, data) => {
             if (err) {
                 res.writeHead(500, { 'Content-Type': 'text/plain' });
                 res.end('Internal Server Error');
