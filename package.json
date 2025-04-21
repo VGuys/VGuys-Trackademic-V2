@@ -5,9 +5,9 @@
   "private": true,
   "license": "MIT",
   "author": "Microsoft",
-  "main": "./js/server/index.js",
+  "main": "./index.js",
   "scripts": {
-    "start": "node ./js/server/index.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "pg": "^8.11.1"
