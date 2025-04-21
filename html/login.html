@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login to Trackademic</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+  <div class="login-container">
+    <h2>Login to Trackademic GPA Tracker</h2>
+    <div id="messageBox" class="message" style="display: none;"></div>
+    
+    <div class="form-section">
+      <label for="user_id">User ID:</label>
+      <input type="text" id="user_id" required>
+    </div>
+    
+    <div class="form-section">
+      <label for="password">Password:</label>
+      <input type="password" id="password" required>
+    </div>
+    
+    <button id="loginButton">Login</button>
+    
+    <p>Don't have an account? <a href="/signup">Sign up here</a></p>
+
+    <script>
+      document.getElementById('loginButton').addEventListener('click', async function() {
+        const user_id = document.getElementById('user_id').value.trim();
+        const password = document.getElementById('password').value;
+        
+        if (!user_id || !password) {
+          showMessage('Please fill in all fields', 'error');
+          return;
+        }
+        
+        try {
+          const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ user_id, password })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            showMessage('Login successful!', 'success');
+            // Redirect to home page after successful login
+            setTimeout(() => {
+              window.location.href = '/home';
+            }, 1000);
+          } else {
+            showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
+          }
+        } catch (error) {
+          showMessage('An error occurred. Please try again later.', 'error');
+          console.error('Login error:', error);
+        }
+      });
+      
+      function showMessage(message, type) {
+        const messageBox = document.getElementById('messageBox');
+        messageBox.textContent = message;
+        messageBox.style.display = 'block';
+        messageBox.className = 'message ' + type;
+      }
+    </script>
+  </div>
+</body>
+</html>
