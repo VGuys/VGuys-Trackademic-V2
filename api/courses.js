@@ -18,7 +18,7 @@ module.exports = async function (context, req) {
         throw new Error('Missing required fields');
       await pool.query(
         `INSERT INTO courses (user_id, course_id, course_name, semester, status, gpa_letter)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (user_id, course_id) DO UPDATE SET
          course_name = EXCLUDED.course_name,
          semester = EXCLUDED.semester,
