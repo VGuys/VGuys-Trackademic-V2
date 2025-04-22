@@ -13,7 +13,9 @@ module.exports = async function (context, req) {
       const result = await pool.query('SELECT * FROM courses WHERE user_id = $1', [user_id]);
       context.res = { status: 200, body: { success: true, courses: result.rows } };
     } else if (method === 'POST') {
+      console.log("Received POST body:", JSON.stringify(body));
       const { user_id, course_id, course_name, semester, status, gpa_letter } = body;
+      console.log("Parsed values:", { user_id, course_id, course_name, semester, status, gpa_letter });
       if (!user_id || !course_id || !course_name || !semester || !status)
         throw new Error('Missing required fields');
       await pool.query(
