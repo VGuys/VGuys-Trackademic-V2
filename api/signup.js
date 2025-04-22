@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 
+
 module.exports = async function (context, req) {
   const { user_id, password } = req.body;
   if (!user_id || !password) {
