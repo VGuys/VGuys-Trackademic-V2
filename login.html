@@ -85,7 +85,10 @@
           showMessage('Login successful!', 'success');
           // Redirect to home page after successful login
           setTimeout(() => {
-            window.location.href = '/home';
+            //window.location.href = '/home';
+            // Save userId for session persistence
+            localStorage.setItem("userId", user_id);
+            window.location.href = '/index.html';
           }, 1000);
         } else {
           showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
