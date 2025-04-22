@@ -1,0 +1,8 @@
+{
+  "name": "trackademic-app",
+  "version": "1.0.0",
+  "description": "Trackademic GPA Tracker - Azure Static Web App + Neon DB",
+  "dependencies": {
+    "pg": "^8.11.1"
+  }
+}
