@@ -82,6 +82,7 @@
         const data = await response.json();
         
         if (data.success) {
+          localStorage.setItem('userId', user_id);
           showMessage('Login successful!', 'success');
           // Redirect to home page after successful login
           setTimeout(() => {
