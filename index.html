@@ -493,7 +493,9 @@
       const courseName = document.getElementById("courseName").value.trim();
       const semester = document.getElementById("semester").value;
       const status = document.getElementById("status").value;
-      const gpaLetter = status === "Completed" ? document.getElementById("gpaLetter").value : null;
+      //const gpaLetter = status === "Completed" ? document.getElementById("gpaLetter").value : null;
+      const gpaSelect = document.getElementById("gpaLetter");
+      const gpaLetter = (status === "Completed" && gpaSelect.value !== "") ? gpaSelect.value : null;
       
       // Validate form
       if (!courseId || !courseName || !semester || !status) {
