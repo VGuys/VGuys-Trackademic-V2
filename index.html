@@ -352,10 +352,32 @@
       'F': 0.0
     };
     
-    // Check if user is logged in
+    // Check if user is logged in - MODIFIED to prevent redirect loop
     const userId = localStorage.getItem('userId');
+    console.log("User ID from localStorage:", userId); // Debug info
     if (!userId) {
-      window.location.href = '/login';
+      console.log("No user ID found, redirecting to login"); // Debug info
+      
+      // Store the current URL to redirect back after login
+      sessionStorage.setItem('redirectUrl', window.location.href);
+      
+      // Check if we're already being redirected to avoid loops
+      if (!sessionStorage.getItem('redirecting')) {
+        sessionStorage.setItem('redirecting', 'true');
+        
+        // Add a small delay before redirecting
+        setTimeout(() => {
+          window.location.href = '/login';
+          sessionStorage.removeItem('redirecting');
+        }, 300);
+      } else {
+        // We're in a redirect loop, let the user know
+        console.error("Redirect loop detected!");
+        document.body.innerHTML = '<h2>Authentication Error</h2><p>Unable to authenticate. Please try clearing your browser cache and cookies, then login again. If the problem persists, contact support.</p>';
+      }
+    } else {
+      // Clear any redirect flags
+      sessionStorage.removeItem('redirecting');
     }
     
     // Initialize variables
@@ -374,54 +396,58 @@
     
     // Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
-      // Load user courses
-      fetchCourses();
-      
-      // Set up tab navigation
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          const tabId = tab.getAttribute('data-tab');
-          
-          // Update active tab
-          tabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          
-          // Show selected tab content
-          tabContents.forEach(content => {
-            if (content.id === tabId) {
-              content.classList.remove('hidden');
-            } else {
-              content.classList.add('hidden');
-            }
+      // Check if authentication was successful before proceeding
+      if (userId) {
+        // Load user courses
+        fetchCourses();
+        
+        // Set up tab navigation
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab');
+            
+            // Update active tab
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // Show selected tab content
+            tabContents.forEach(content => {
+              if (content.id === tabId) {
+                content.classList.remove('hidden');
+              } else {
+                content.classList.add('hidden');
+              }
+            });
           });
         });
-      });
-      
-      // Show/hide GPA input based on status
-      statusSelect.addEventListener("change", () => {
-        if (statusSelect.value === "Completed") {
-          gpaSection.classList.remove("hidden");
-        } else {
-          gpaSection.classList.add("hidden");
-        }
-      });
-      
-      // Course form submission
-      document.getElementById("courseForm").addEventListener("submit", function(e) {
-        e.preventDefault();
-        addCourse();
-      });
-      
-      // Semester filter change
-      semesterFilter.addEventListener("change", function() {
-        updateCourseList();
-      });
-      
-      // Logout button
-      document.getElementById("logoutBtn").addEventListener("click", () => {
-        localStorage.removeItem('userId');
-        window.location.href = '/login';
-      });
+        
+        // Show/hide GPA input based on status
+        statusSelect.addEventListener("change", () => {
+          if (statusSelect.value === "Completed") {
+            gpaSection.classList.remove("hidden");
+          } else {
+            gpaSection.classList.add("hidden");
+          }
+        });
+        
+        // Course form submission
+        document.getElementById("courseForm").addEventListener("submit", function(e) {
+          e.preventDefault();
+          addCourse();
+        });
+        
+        // Semester filter change
+        semesterFilter.addEventListener("change", function() {
+          updateCourseList();
+        });
+        
+        // Logout button
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+          localStorage.removeItem('userId');
+          console.log("User logged out, userId removed from localStorage");
+          window.location.href = '/login';
+        });
+      }
     });
     
     // Fetch courses from API
@@ -865,7 +891,7 @@
         }
       });
     }
-
+    
     // Update Grade Distribution Chart
     function updateGradeDistributionChart() {
       const chartCanvas = document.getElementById('gradeDistributionChart');
@@ -891,9 +917,12 @@
           datasets: [{
             label: 'Grade Distribution',
             data: data,
-            backgroundColor: [
-              '#4CAF50', '#66BB6A', '#2196F3', '#42A5F5', '#FF9800', '#FF5722', '#F44336'
-            ]
+            backgroundColor: labels.map((_, i) => {
+              const colors = [
+                '#4CAF50', '#66BB6A', '#2196F3', '#42A5F5', '#FF9800', '#FF5722', '#F44336'
+              ];
+              return colors[i % colors.length];
+            })
           }]
         },
         options: {
@@ -906,6 +935,9 @@
                   return `${context.label}: ${context.raw}`;
                 }
               }
+            },
+            legend: {
+              position: 'right'
             }
           }
         }
@@ -925,3 +957,5 @@
   </script>
 </body>
 </html>
+
+
