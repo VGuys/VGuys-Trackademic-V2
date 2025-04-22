@@ -511,7 +511,7 @@
       }
       
       try {
-        const response = await fetch('/api/courses?user_id=${userId}', {
+        const response = await fetch(`/api/courses?user_id=${userId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
