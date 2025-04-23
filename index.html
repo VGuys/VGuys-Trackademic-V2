@@ -498,7 +498,7 @@
       const gpaSelect = document.getElementById("gpaLetter");
       const gpaLetter = (status === "Completed" && gpaSelect.value !== "") ? gpaSelect.value : null;
 
-      console.log(user_id, userID, courseId, courseName, semester, status, gpaSelect, gpaLetter)
+      console.log(userID, courseId, courseName, semester, status, gpaSelect, gpaLetter)
       
       // Validate form
       if (!courseId || !courseName || !semester || !status) {
