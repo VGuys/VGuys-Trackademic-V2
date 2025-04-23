@@ -488,18 +488,17 @@
       });
     }
     
+    // Add a new course
     async function addCourse() {
-      // Fix the userId variable - make sure it's consistent
-      const userId = window.userId; // Make sure this variable is defined somewhere
-      
       const courseId = document.getElementById("courseId").value.trim();
       const courseName = document.getElementById("courseName").value.trim();
       const semester = document.getElementById("semester").value;
       const status = document.getElementById("status").value;
-      const gpaLetter = (status === "Completed") ? document.getElementById("gpaLetter").value : null;
-      
-      // Debug log all values
-      console.log("Sending values:", { userId, courseId, courseName, semester, status, gpaLetter });
+      //const gpaLetter = status === "Completed" ? document.getElementById("gpaLetter").value : null;
+      const gpaSelect = document.getElementById("gpaLetter");
+      const gpaLetter = (status === "Completed" && gpaSelect.value !== "") ? gpaSelect.value : null;
+
+      console.log(userID, courseId, courseName, semester, status, gpaSelect, gpaLetter)
       
       // Validate form
       if (!courseId || !courseName || !semester || !status) {
@@ -513,8 +512,7 @@
       }
       
       try {
-        // Simplify the endpoint - no need for query parameters
-        const response = await fetch('/api/courses', {
+        const response = await fetch(`/api/courses?user_id=${userId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -529,19 +527,12 @@
           })
         });
         
-        // Check if the response is ok before parsing
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Server responded with status ${response.status}: ${errorText}`);
-        }
-        
         const data = await response.json();
         
         if (data.success) {
           showMessage('Course added successfully!', 'success');
           document.getElementById("courseForm").reset();
-          const gpaSection = document.getElementById("gpaSection"); // Make sure this exists
-          if (gpaSection) gpaSection.classList.add("hidden");
+          gpaSection.classList.add("hidden");
           
           // Fetch updated courses
           fetchCourses();
@@ -553,7 +544,7 @@
         }
       } catch (error) {
         console.error('Error adding course:', error);
-        showMessage(`Error: ${error.message}`, 'error');
+        showMessage('Error connecting to server', 'error');
       }
     }
     
