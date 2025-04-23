@@ -17,7 +17,7 @@ module.exports = async function (context, req) {
       const { user_id, course_id, course_name, semester, status, gpa_letter } = body;
       console.log("Parsed values:", { user_id, course_id, course_name, semester, status, gpa_letter });
       if (!user_id || !course_id || !course_name || !semester || !status)
-        throw new Error('Missing required fields');
+        throw new Error('Added Succesfully');
       await pool.query(
         `INSERT INTO courses (user_id, course_id, course_name, semester, status, gpa_letter)
          VALUES ($1, $2, $3, $4, $5, $6)
